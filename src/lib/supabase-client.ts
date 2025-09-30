@@ -1,5 +1,6 @@
 import { Client, Contact, Interaction, ClientStats } from './types';
 import { supabase } from './supabase';
+import * as mockStorage from './mock-storage';
 
 // Check if Supabase is properly configured
 const isSupabaseConfigured = () => {
@@ -11,6 +12,10 @@ const isSupabaseConfigured = () => {
 
 // Client operations
 export async function getClients(): Promise<Client[]> {
+  if (!isSupabaseConfigured()) {
+    return mockStorage.getMockClients();
+  }
+
   const { data: clients, error } = await supabase
     .from('clients')
     .select(`
@@ -39,6 +44,10 @@ export async function getClients(): Promise<Client[]> {
 }
 
 export async function getClientById(id: string): Promise<Client | null> {
+  if (!isSupabaseConfigured()) {
+    return mockStorage.getMockClientById(id);
+  }
+
   const { data: client, error } = await supabase
     .from('clients')
     .select(`
@@ -68,15 +77,10 @@ export async function getClientById(id: string): Promise<Client | null> {
 }
 
 export async function addClient(client: Omit<Client, 'id' | 'createdAt'>): Promise<Client | null> {
-  // If Supabase is not configured, return mock data
+  // If Supabase is not configured, use mock storage
   if (!isSupabaseConfigured()) {
-    console.warn('Supabase not configured, using mock data');
-    const mockClient: Client = {
-      ...client,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    return mockClient;
+    console.warn('Supabase not configured, using mock storage');
+    return mockStorage.addMockClient(client);
   }
 
   try {
@@ -269,6 +273,10 @@ export async function deleteContact(clientId: string, contactId: string): Promis
 
 // Interaction operations
 export async function getInteractionsByClientId(clientId: string): Promise<Interaction[]> {
+  if (!isSupabaseConfigured()) {
+    return mockStorage.getMockInteractionsByClientId(clientId);
+  }
+
   const { data, error } = await supabase
     .from('interactions')
     .select('*')
@@ -360,6 +368,10 @@ export async function deleteInteraction(id: string): Promise<boolean> {
 
 // Stats
 export async function getClientStats(): Promise<ClientStats> {
+  if (!isSupabaseConfigured()) {
+    return mockStorage.getMockClientStats();
+  }
+
   const { data: clients, error } = await supabase
     .from('clients')
     .select('next_contact_date');
