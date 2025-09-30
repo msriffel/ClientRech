@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { 
-  getClients, 
-  getClientById, 
-  getInteractionsByClientId, 
+import {
+  getClients,
+  getClientById,
+  getInteractionsByClientId,
   getClientStats,
-  addClient, 
-  updateClient, 
+  addClient,
+  updateClient,
   deleteClient,
   addInteraction,
   updateInteraction,
@@ -17,25 +17,25 @@ import {
   updateContact,
   deleteContact
 } from './supabase-client';
-import { Client, Interaction, Contact, ClientStatus } from './types';
+import { Client, ClientStatus } from './types';
 
 // ----------------------
 // Fetch functions
 // ----------------------
 export async function fetchClients() {
-  return await getClients();
+  return getClients();
 }
 
 export async function fetchClientById(id: string) {
-  return await getClientById(id);
+  return getClientById(id);
 }
 
 export async function fetchInteractionsByClientId(clientId: string) {
-  return await getInteractionsByClientId(clientId);
+  return getInteractionsByClientId(clientId);
 }
 
 export async function fetchClientStats() {
-  return await getClientStats();
+  return getClientStats();
 }
 
 // ----------------------
@@ -112,14 +112,10 @@ export async function createInteraction(formData: FormData) {
   const type = formData.get('type') as string;
   const notes = formData.get('notes') as string;
   const nextContactDate = formData.get('nextContactDate') as string;
-
   const now = new Date().toISOString();
 
   await addInteraction({ clientId, date: now, type: type as any, notes });
-
-  // Atualiza datas do cliente
   await updateClient(clientId, { lastContactDate: now, nextContactDate });
-
   revalidatePath(`/clients/${clientId}`);
 }
 
@@ -129,7 +125,6 @@ export async function updateInteractionAction(id: string, formData: FormData) {
     notes: formData.get('notes') as string,
     date: formData.get('date') as string
   });
-
   revalidatePath('/');
 }
 
@@ -142,7 +137,6 @@ export async function deleteInteractionAction(id: string, clientId: string) {
 // ----------------------
 // Contact Actions
 // ----------------------
-// ✅ Ajuste aqui: passa apenas um objeto com client_id incluído
 export async function createContact(clientId: string, formData: FormData) {
   await addContact({
     client_id: clientId,
@@ -151,33 +145,21 @@ export async function createContact(clientId: string, formData: FormData) {
     phone: (formData.get('phone') as string) || undefined,
     role: formData.get('role') as string
   });
-
   revalidatePath(`/clients/${clientId}`);
 }
 
-// src/lib/actions.ts
 export async function updateContactAction(clientId: string, contactId: string, formData: FormData) {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
-  const role = formData.get('role') as string;
-
   await updateContact(contactId, {
-    name,
-    email,
-    phone: phone || undefined,
-    role
+    name: formData.get('name') as string,
+    email: formData.get('email') as string,
+    phone: (formData.get('phone') as string) || undefined,
+    role: formData.get('role') as string
   });
-
   revalidatePath(`/clients/${clientId}`);
 }
 
-export async function deleteContactAction(
-  clientId: string,
-  contactId: string
-) {
-  const success = await deleteContact(contactId); // a função do supabase continua recebendo só o contactId
+export async function deleteContactAction(clientId: string, contactId: string) {
+  const success = await deleteContact(contactId);
   if (success) revalidatePath(`/clients/${clientId}`);
   return success;
 }
-

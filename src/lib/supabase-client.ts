@@ -1,8 +1,25 @@
-import { Client, Contact } from './types';
-import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+import { Client, Contact, Interaction } from './types';
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+// Cliente para front-end (anon)
+export const supabase = createClient(
+  supabaseUrl,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Cliente para Server Actions (Service Role)
+export const supabaseAdmin = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// ----------------------
+// Clients
+// ----------------------
 export async function addClient(client: Omit<Client, 'id' | 'createdAt'>): Promise<Client | null> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('clients')
     .insert({
       company_name: client.companyName,
@@ -31,7 +48,7 @@ export async function addClient(client: Omit<Client, 'id' | 'createdAt'>): Promi
       role: contact.role
     }));
 
-    await supabase.from('contacts').insert(contactsToInsert);
+    await supabaseAdmin.from('contacts').insert(contactsToInsert);
   }
 
   return {
@@ -60,15 +77,12 @@ export async function getClientById(id: string): Promise<Client | null> {
     return null;
   }
 
-  // Busca contatos relacionados
   const { data: contacts, error: contactsError } = await supabase
     .from('contacts')
     .select('*')
     .eq('client_id', id);
 
-  if (contactsError) {
-    console.error('Error fetching contacts:', contactsError);
-  }
+  if (contactsError) console.error('Error fetching contacts:', contactsError);
 
   return {
     id: data.id,
@@ -84,23 +98,6 @@ export async function getClientById(id: string): Promise<Client | null> {
   };
 }
 
-
-export async function getInteractionsByClientId(clientId: string) {
-  const { data, error } = await supabase
-    .from('interactions')
-    .select('*')
-    .eq('client_id', clientId)
-    .order('date', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching interactions:', error);
-    return [];
-  }
-
-  return data || [];
-}
-
-
 export async function getClients(): Promise<Client[]> {
   const { data, error } = await supabase
     .from('clients')
@@ -112,7 +109,6 @@ export async function getClients(): Promise<Client[]> {
     return [];
   }
 
-  // Para cada cliente, buscar contatos (opcional, pode ser otimizado)
   const clientsWithContacts = await Promise.all(
     (data || []).map(async (client) => {
       const { data: contacts } = await supabase
@@ -138,6 +134,99 @@ export async function getClients(): Promise<Client[]> {
   return clientsWithContacts;
 }
 
+export async function updateClient(id: string, updates: Partial<Client>) {
+  const { error } = await supabaseAdmin
+    .from('clients')
+    .update({
+      company_name: updates.companyName,
+      website: updates.website,
+      phone: updates.phone,
+      logo_url: updates.logoUrl,
+      status: updates.status,
+      last_contact_date: updates.lastContactDate,
+      next_contact_date: updates.nextContactDate
+    })
+    .eq('id', id);
+
+  return !error;
+}
+
+export async function deleteClient(id: string) {
+  const { error } = await supabaseAdmin
+    .from('clients')
+    .delete()
+    .eq('id', id);
+
+  return !error;
+}
+
+// ----------------------
+// Contacts
+// ----------------------
+export async function addContact(contact: any) {
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .insert(contact);
+
+  if (error) console.error('Error adding contact:', error);
+  return !error;
+}
+
+export async function updateContact(id: string, updates: any) {
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .update(updates)
+    .eq('id', id);
+
+  if (error) console.error('Error updating contact:', error);
+  return !error;
+}
+
+export async function deleteContact(id: string) {
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .delete()
+    .eq('id', id);
+
+  if (error) console.error('Error deleting contact:', error);
+  return !error;
+}
+
+// ----------------------
+// Interactions
+// ----------------------
+export async function addInteraction(interaction: any) {
+  const { error } = await supabaseAdmin
+    .from('interactions')
+    .insert(interaction);
+
+  if (error) console.error('Error adding interaction:', error);
+  return !error;
+}
+
+export async function updateInteraction(id: string, updates: any) {
+  const { error } = await supabaseAdmin
+    .from('interactions')
+    .update(updates)
+    .eq('id', id);
+
+  if (error) console.error('Error updating interaction:', error);
+  return !error;
+}
+
+export async function deleteInteraction(id: string) {
+  const { error } = await supabaseAdmin
+    .from('interactions')
+    .delete()
+    .eq('id', id);
+
+  if (error) console.error('Error deleting interaction:', error);
+  return !error;
+}
+
+// ----------------------
+// Client Stats
+// ----------------------
 export async function getClientStats(): Promise<{ total: number; active: number; inactive: number }> {
   const { count: total } = await supabase
     .from('clients')
@@ -160,87 +249,20 @@ export async function getClientStats(): Promise<{ total: number; active: number;
   };
 }
 
-
-export async function updateClient(id: string, updates: Partial<Client>) {
-  const { error } = await supabase
-    .from('clients')
-    .update({
-      company_name: updates.companyName,
-      website: updates.website,
-      phone: updates.phone,
-      logo_url: updates.logoUrl,
-      status: updates.status,
-      last_contact_date: updates.lastContactDate,
-      next_contact_date: updates.nextContactDate
-    })
-    .eq('id', id);
-
-  return !error;
-}
-
-export async function deleteClient(id: string) {
-  const { error } = await supabase
-    .from('clients')
-    .delete()
-    .eq('id', id);
-
-  return !error;
-}
-
-export async function addInteraction(interaction: any) {
-  const { error } = await supabase
+// ----------------------
+// Interactions
+// ----------------------
+export async function getInteractionsByClientId(clientId: string) {
+  const { data, error } = await supabase
     .from('interactions')
-    .insert(interaction);
-
-  return !error;
-}
-
-export async function updateInteraction(id: string, updates: any) {
-  const { error } = await supabase
-    .from('interactions')
-    .update(updates)
-    .eq('id', id);
-
-  return !error;
-}
-
-export async function deleteInteraction(id: string) {
-  const { error } = await supabase
-    .from('interactions')
-    .delete()
-    .eq('id', id);
-
-  return !error;
-}
-
-export async function addContact(contact: any) {
-  const { error } = await supabase
-    .from('contacts')
-    .insert(contact);
-
-  return !error;
-}
-
-export async function updateContact(id: string, updates: any) {
-  const { error } = await supabase
-    .from('contacts')
-    .update(updates)
-    .eq('id', id);
-
-  return !error;
-}
-
-export async function deleteContact(id: string) {
-  const { error } = await supabase
-    .from('contacts')
-    .delete()
-    .eq('id', id);
+    .select('*')
+    .eq('client_id', clientId)
+    .order('date', { ascending: false });
 
   if (error) {
-    console.error('Error deleting contact:', error);
-    return false;
+    console.error('Error fetching interactions:', error);
+    return [];
   }
 
-  return true;
+  return data || [];
 }
-
