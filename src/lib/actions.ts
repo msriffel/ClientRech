@@ -60,7 +60,6 @@ export async function createClient(formData: FormData) {
     status,
     lastContactDate: now,
     nextContactDate,
-    createdAt: now,
     contacts: [{
       id: 'temp',
       name: contactName,
@@ -69,6 +68,10 @@ export async function createClient(formData: FormData) {
       role: contactRole
     }]
   });
+
+  if (!newClient) {
+    throw new Error('Failed to create client');
+  }
 
   revalidatePath('/');
   redirect(`/clients/${newClient.id}`);
