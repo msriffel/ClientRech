@@ -10,7 +10,11 @@ import { fetchClients, fetchClientStats } from '@/lib/actions';
 
 export default function Dashboard() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [stats, setStats] = useState<ClientStats>({ totalClients: 0, overdueContacts: 0, upcomingContacts: 0 });
+  const [stats, setStats] = useState<ClientStats>({
+    totalClients: 0,
+    overdueContacts: 0,
+    upcomingContacts: 0
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -18,12 +22,20 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientsData, statsData] = await Promise.all([
+        const [clientsData, statsDataFromApi] = await Promise.all([
           fetchClients(),
           fetchClientStats()
         ]);
+
         setClients(clientsData);
-        setStats(statsData);
+
+        // Ajusta os nomes para o StatsCards
+        setStats({
+          totalClients: statsDataFromApi.total ?? 0,
+          overdueContacts: statsDataFromApi.active ?? 0,
+          upcomingContacts: statsDataFromApi.inactive ?? 0
+        });
+
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       } finally {
@@ -56,7 +68,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
