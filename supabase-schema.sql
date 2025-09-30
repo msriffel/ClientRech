@@ -96,7 +96,7 @@ WHERE c.company_name = contact_data.company_name;
 INSERT INTO interactions (client_id, date, type, notes)
 SELECT 
   c.id,
-  interaction_data.date,
+  interaction_data.date::timestamptz,
   interaction_data.type,
   interaction_data.notes
 FROM clients c
