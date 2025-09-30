@@ -138,19 +138,16 @@ export async function getClients(): Promise<Client[]> {
   return clientsWithContacts;
 }
 
-export async function getClientStats() {
-  // Total de clientes
+export async function getClientStats(): Promise<{ total: number; active: number; inactive: number }> {
   const { count: total } = await supabase
     .from('clients')
     .select('*', { count: 'exact', head: true });
 
-  // Clientes ativos
   const { count: active } = await supabase
     .from('clients')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'ativo');
 
-  // Clientes inativos
   const { count: inactive } = await supabase
     .from('clients')
     .select('*', { count: 'exact', head: true })
@@ -162,6 +159,7 @@ export async function getClientStats() {
     inactive: inactive ?? 0
   };
 }
+
 
 export async function updateClient(id: string, updates: Partial<Client>) {
   const { error } = await supabase
