@@ -72,19 +72,35 @@ INSERT INTO clients (company_name, website, phone, logo_url, status, last_contac
 ('StartupXYZ', 'https://startupxyz.com', NULL, 'https://picsum.photos/seed/3/100/100', 'Prospect Frio', '2023-11-20T16:00:00Z', '2024-01-20T16:00:00Z'),
 ('Empresa Fiel Ltda', 'https://empresafiel.com', '+55 31 77777-3333', 'https://picsum.photos/seed/4/100/100', 'Cliente Fiel', '2024-01-12T11:00:00Z', '2024-02-12T11:00:00Z');
 
--- Insert sample contacts
+-- Insert sample contacts using CTE to avoid subquery issues
+WITH client_ids AS (
+  SELECT 
+    id,
+    company_name,
+    ROW_NUMBER() OVER (ORDER BY created_at) as rn
+  FROM clients 
+  WHERE company_name IN ('TechCorp Solutions', 'Inovação Digital', 'StartupXYZ', 'Empresa Fiel Ltda')
+)
 INSERT INTO contacts (client_id, name, email, phone, role) VALUES
-((SELECT id FROM clients WHERE company_name = 'TechCorp Solutions'), 'João Silva', 'joao@techcorp.com', '+55 11 99999-1111', 'CEO'),
-((SELECT id FROM clients WHERE company_name = 'TechCorp Solutions'), 'Maria Santos', 'maria@techcorp.com', '+55 11 99999-1112', 'CTO'),
-((SELECT id FROM clients WHERE company_name = 'Inovação Digital'), 'Carlos Oliveira', 'carlos@inovacao.com', '+55 21 88888-2222', 'Diretor'),
-((SELECT id FROM clients WHERE company_name = 'StartupXYZ'), 'Ana Costa', 'ana@startupxyz.com', NULL, 'Fundadora'),
-((SELECT id FROM clients WHERE company_name = 'Empresa Fiel Ltda'), 'Roberto Lima', 'roberto@empresafiel.com', '+55 31 77777-3333', 'Gerente'),
-((SELECT id FROM clients WHERE company_name = 'Empresa Fiel Ltda'), 'Fernanda Alves', 'fernanda@empresafiel.com', NULL, 'Assistente');
+((SELECT id FROM client_ids WHERE company_name = 'TechCorp Solutions' AND rn = 1), 'João Silva', 'joao@techcorp.com', '+55 11 99999-1111', 'CEO'),
+((SELECT id FROM client_ids WHERE company_name = 'TechCorp Solutions' AND rn = 1), 'Maria Santos', 'maria@techcorp.com', '+55 11 99999-1112', 'CTO'),
+((SELECT id FROM client_ids WHERE company_name = 'Inovação Digital' AND rn = 1), 'Carlos Oliveira', 'carlos@inovacao.com', '+55 21 88888-2222', 'Diretor'),
+((SELECT id FROM client_ids WHERE company_name = 'StartupXYZ' AND rn = 1), 'Ana Costa', 'ana@startupxyz.com', NULL, 'Fundadora'),
+((SELECT id FROM client_ids WHERE company_name = 'Empresa Fiel Ltda' AND rn = 1), 'Roberto Lima', 'roberto@empresafiel.com', '+55 31 77777-3333', 'Gerente'),
+((SELECT id FROM client_ids WHERE company_name = 'Empresa Fiel Ltda' AND rn = 1), 'Fernanda Alves', 'fernanda@empresafiel.com', NULL, 'Assistente');
 
--- Insert sample interactions
+-- Insert sample interactions using CTE to avoid subquery issues
+WITH client_ids AS (
+  SELECT 
+    id,
+    company_name,
+    ROW_NUMBER() OVER (ORDER BY created_at) as rn
+  FROM clients 
+  WHERE company_name IN ('TechCorp Solutions', 'Inovação Digital', 'StartupXYZ', 'Empresa Fiel Ltda')
+)
 INSERT INTO interactions (client_id, date, type, notes) VALUES
-((SELECT id FROM clients WHERE company_name = 'TechCorp Solutions'), '2024-01-15T10:00:00Z', 'Reunião', 'Reunião de acompanhamento do projeto. Cliente satisfeito com o progresso.'),
-((SELECT id FROM clients WHERE company_name = 'TechCorp Solutions'), '2024-01-10T14:00:00Z', 'Email', 'Envio de relatório mensal e agendamento da próxima reunião.'),
-((SELECT id FROM clients WHERE company_name = 'Inovação Digital'), '2024-01-10T14:30:00Z', 'Chamada', 'Primeira conversa sobre possibilidade de parceria. Interesse demonstrado.'),
-((SELECT id FROM clients WHERE company_name = 'StartupXYZ'), '2023-11-20T16:00:00Z', 'Email', 'Envio de proposta inicial. Aguardando retorno.'),
-((SELECT id FROM clients WHERE company_name = 'Empresa Fiel Ltda'), '2024-01-12T11:00:00Z', 'Reunião', 'Reunião de renovação de contrato. Cliente muito satisfeito com os serviços.');
+((SELECT id FROM client_ids WHERE company_name = 'TechCorp Solutions' AND rn = 1), '2024-01-15T10:00:00Z', 'Reunião', 'Reunião de acompanhamento do projeto. Cliente satisfeito com o progresso.'),
+((SELECT id FROM client_ids WHERE company_name = 'TechCorp Solutions' AND rn = 1), '2024-01-10T14:00:00Z', 'Email', 'Envio de relatório mensal e agendamento da próxima reunião.'),
+((SELECT id FROM client_ids WHERE company_name = 'Inovação Digital' AND rn = 1), '2024-01-10T14:30:00Z', 'Chamada', 'Primeira conversa sobre possibilidade de parceria. Interesse demonstrado.'),
+((SELECT id FROM client_ids WHERE company_name = 'StartupXYZ' AND rn = 1), '2023-11-20T16:00:00Z', 'Email', 'Envio de proposta inicial. Aguardando retorno.'),
+((SELECT id FROM client_ids WHERE company_name = 'Empresa Fiel Ltda' AND rn = 1), '2024-01-12T11:00:00Z', 'Reunião', 'Reunião de renovação de contrato. Cliente muito satisfeito com os serviços.');
