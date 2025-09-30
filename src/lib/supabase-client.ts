@@ -6,8 +6,10 @@ import * as mockStorage from './mock-storage';
 const isSupabaseConfigured = () => {
   return process.env.NEXT_PUBLIC_SUPABASE_URL && 
          process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
+         process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://seu-projeto-id.supabase.co' &&
          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && 
-         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder_key';
+         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder_key' &&
+         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'sua-chave-anonima-aqui';
 };
 
 // Client operations
@@ -77,72 +79,73 @@ export async function getClientById(id: string): Promise<Client | null> {
 }
 
 export async function addClient(client: Omit<Client, 'id' | 'createdAt'>): Promise<Client | null> {
-  // If Supabase is not configured, use mock storage
-  if (!isSupabaseConfigured()) {
-    console.warn('Supabase not configured, using mock storage');
-    return mockStorage.addMockClient(client);
-  }
+  // Try Supabase first if configured
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert({
+          company_name: client.companyName,
+          website: client.website,
+          phone: client.phone,
+          logo_url: client.logoUrl,
+          status: client.status,
+          last_contact_date: client.lastContactDate,
+          next_contact_date: client.nextContactDate
+        })
+        .select()
+        .single();
 
-  try {
-    const { data, error } = await supabase
-      .from('clients')
-      .insert({
-        company_name: client.companyName,
-        website: client.website,
-        phone: client.phone,
-        logo_url: client.logoUrl,
-        status: client.status,
-        last_contact_date: client.lastContactDate,
-        next_contact_date: client.nextContactDate
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding client:', error);
-      throw new Error(`Failed to create client: ${error.message}`);
-    }
-
-    if (!data) {
-      throw new Error('No data returned from client creation');
-    }
-
-    // Add contacts if any
-    if (client.contacts && client.contacts.length > 0) {
-      const contactsToInsert = client.contacts.map(contact => ({
-        client_id: data.id,
-        name: contact.name,
-        email: contact.email,
-        phone: contact.phone,
-        role: contact.role
-      }));
-
-      const { error: contactsError } = await supabase
-        .from('contacts')
-        .insert(contactsToInsert);
-
-      if (contactsError) {
-        console.error('Error adding contacts:', contactsError);
-        // Don't fail the entire operation if contacts fail
+      if (error) {
+        console.error('Error adding client to Supabase:', error);
+        throw new Error(`Failed to create client: ${error.message}`);
       }
-    }
 
-    return {
-      id: data.id,
-      companyName: data.company_name,
-      website: data.website,
-      phone: data.phone,
-      logoUrl: data.logo_url,
-      status: data.status as any,
-      lastContactDate: data.last_contact_date,
-      nextContactDate: data.next_contact_date,
-      createdAt: data.created_at,
-      contacts: client.contacts || []
-    };
-  } catch (error) {
-    console.error('Unexpected error in addClient:', error);
-    return null;
+      if (!data) {
+        throw new Error('No data returned from client creation');
+      }
+
+      // Add contacts if any
+      if (client.contacts && client.contacts.length > 0) {
+        const contactsToInsert = client.contacts.map(contact => ({
+          client_id: data.id,
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+          role: contact.role
+        }));
+
+        const { error: contactsError } = await supabase
+          .from('contacts')
+          .insert(contactsToInsert);
+
+        if (contactsError) {
+          console.error('Error adding contacts:', contactsError);
+          // Don't fail the entire operation if contacts fail
+        }
+      }
+
+      return {
+        id: data.id,
+        companyName: data.company_name,
+        website: data.website,
+        phone: data.phone,
+        logoUrl: data.logo_url,
+        status: data.status as any,
+        lastContactDate: data.last_contact_date,
+        nextContactDate: data.next_contact_date,
+        createdAt: data.created_at,
+        contacts: client.contacts || []
+      };
+    } catch (error) {
+      console.error('Supabase error, falling back to mock storage:', error);
+      // Fall back to mock storage if Supabase fails
+    }
   }
+
+  // Use mock storage as fallback
+  console.warn('Using mock storage for client creation');
+  return mockStorage.addMockClient(client);
 }
 
 export async function updateClient(id: string, updates: Partial<Client>): Promise<Client | null> {

@@ -74,18 +74,7 @@ export async function createClient(formData: FormData) {
   }
 
   revalidatePath('/');
-  
-  // If using mock data (Supabase not configured), redirect to home
-  const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && 
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder_key';
-  
-  if (!isSupabaseConfigured) {
-    redirect('/');
-  } else {
-    redirect(`/clients/${newClient.id}`);
-  }
+  redirect(`/clients/${newClient.id}`);
 }
 
 export async function updateClientAction(id: string, formData: FormData) {
