@@ -37,11 +37,12 @@ export interface Client {
   contacts: Contact[];
 }
 
-export interface ClientStats {
+export type ClientStats = {
   totalClients: number;
   overdueContacts: number;
   upcomingContacts: number;
-}
+};
+
 
 export interface AISuggestion {
   suggestedStatus: ClientStatus;
