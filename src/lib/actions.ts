@@ -16,7 +16,7 @@ import {
   addContact,
   updateContact,
   deleteContact
-} from './data';
+} from './supabase-client';
 import { Client, Interaction, Contact, ClientStatus } from './types';
 
 // Client Actions

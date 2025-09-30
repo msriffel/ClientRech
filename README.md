@@ -1,6 +1,6 @@
 # ClientReach - CRM Inteligente
 
-Um sistema de CRM (Customer Relationship Management) moderno e inteligente construído com Next.js, TypeScript e IA.
+Um sistema de CRM (Customer Relationship Management) moderno e inteligente construído com Next.js, TypeScript, Supabase e IA.
 
 ## 🚀 Funcionalidades
 
@@ -11,12 +11,16 @@ Um sistema de CRM (Customer Relationship Management) moderno e inteligente const
 - **IA Integrada**: Sugestões inteligentes de status baseadas no histórico
 - **Interface Moderna**: Design responsivo com Tailwind CSS e shadcn/ui
 - **Filtros e Busca**: Encontrar clientes rapidamente
+- **Banco de Dados**: Persistência com Supabase
+- **Deploy Automático**: Hospedagem com Vercel
 
 ## 🛠️ Tecnologias
 
 - **Framework**: Next.js 14 com App Router
 - **Linguagem**: TypeScript
 - **Estilização**: Tailwind CSS
+- **Banco de Dados**: Supabase
+- **Hospedagem**: Vercel
 - **Componentes UI**: shadcn/ui
 - **Ícones**: Lucide React
 - **Formulários**: React Hook Form com Zod
@@ -24,7 +28,28 @@ Um sistema de CRM (Customer Relationship Management) moderno e inteligente const
 - **IA**: Genkit (Google AI)
 - **Fonte**: PT Sans (Google Fonts)
 
-## 📦 Instalação
+## 🚀 Deploy Rápido
+
+### Opção 1: Deploy com Vercel (Recomendado)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/seu-usuario/clientreach-crm)
+
+### Opção 2: Deploy Manual
+
+1. **Fork este repositório**
+2. **Configure o Supabase** (veja [DEPLOYMENT.md](./DEPLOYMENT.md))
+3. **Deploy no Vercel** conectando seu repositório
+4. **Configure as variáveis de ambiente**
+
+## 📦 Instalação Local
+
+### Pré-requisitos
+
+- Node.js 18+ 
+- Conta no Supabase
+- Git
+
+### Passos
 
 1. **Clone o repositório**
    ```bash
@@ -37,24 +62,41 @@ Um sistema de CRM (Customer Relationship Management) moderno e inteligente const
    npm install
    ```
 
-3. **Configure as variáveis de ambiente**
+3. **Configure o Supabase**
+   - Crie um projeto no [Supabase](https://supabase.com)
+   - Execute o script SQL em `supabase-schema.sql`
+   - Copie as credenciais
+
+4. **Configure as variáveis de ambiente**
    ```bash
-   cp .env.example .env.local
+   cp env.example .env.local
    ```
    
    Edite o arquivo `.env.local` com suas configurações:
    ```env
+   NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
    GOOGLE_CLOUD_PROJECT_ID=seu-projeto-id
    GOOGLE_APPLICATION_CREDENTIALS=caminho-para-sua-chave-json
    ```
 
-4. **Execute o projeto**
+5. **Execute o projeto**
    ```bash
    npm run dev
    ```
 
-5. **Acesse a aplicação**
+6. **Acesse a aplicação**
    Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
+
+## 🗄️ Configuração do Banco de Dados
+
+O projeto usa Supabase como banco de dados. Veja o arquivo `supabase-schema.sql` para a estrutura completa.
+
+### Tabelas Principais
+
+- **clients**: Informações dos clientes
+- **contacts**: Contatos de cada cliente  
+- **interactions**: Histórico de interações
 
 ## 🎯 Como Usar
 
@@ -100,6 +142,9 @@ src/
 │   └── api/              # API routes
 ├── components/ui/         # Componentes UI do shadcn
 ├── lib/                  # Utilitários, tipos e dados
+│   ├── supabase.ts       # Configuração do Supabase
+│   ├── supabase-client.ts # Funções do cliente Supabase
+│   └── ...
 └── ...
 ```
 
@@ -118,7 +163,7 @@ A aplicação usa a fonte PT Sans. Para alterar, edite o arquivo `src/app/layout
 
 ### Vercel (Recomendado)
 1. Conecte seu repositório ao Vercel
-2. Configure as variáveis de ambiente
+2. Configure as variáveis de ambiente do Supabase
 3. Deploy automático a cada push
 
 ### Outras Plataformas
@@ -128,11 +173,18 @@ O projeto é compatível com qualquer plataforma que suporte Next.js:
 - AWS Amplify
 - Google Cloud Run
 
+## 📚 Documentação
+
+- [Guia de Deploy](./DEPLOYMENT.md) - Instruções detalhadas de deploy
+- [Instalação](./INSTALL.md) - Guia de instalação local
+- [Quick Start](./QUICK_START.md) - Início rápido
+
 ## 📝 Notas Importantes
 
-- **Dados Simulados**: O projeto usa dados simulados em memória. Para produção, implemente um banco de dados real.
-- **IA**: A funcionalidade de IA requer configuração do Google Cloud e Genkit.
-- **Autenticação**: O projeto não inclui sistema de autenticação. Adicione conforme necessário.
+- **Banco de Dados**: O projeto usa Supabase para persistência de dados
+- **IA**: A funcionalidade de IA requer configuração do Google Cloud e Genkit
+- **Autenticação**: O projeto não inclui sistema de autenticação. Adicione conforme necessário
+- **Segurança**: Configure as políticas RLS do Supabase para produção
 
 ## 🤝 Contribuição
 
@@ -148,8 +200,11 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ## 📞 Suporte
 
-Para dúvidas ou suporte, abra uma issue no repositório ou entre em contato.
+Para dúvidas ou suporte:
+- Abra uma [issue](https://github.com/seu-usuario/clientreach-crm/issues)
+- Consulte a [documentação de deploy](./DEPLOYMENT.md)
+- Entre em contato via email
 
 ---
 
-Desenvolvido com ❤️ usando Next.js e TypeScript
+Desenvolvido com ❤️ usando Next.js, TypeScript e Supabase
