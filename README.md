@@ -32,7 +32,7 @@ Um sistema de CRM (Customer Relationship Management) moderno e inteligente const
 
 ### Opção 1: Deploy com Vercel (Recomendado)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/seu-usuario/clientreach-crm)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/msriffel/ClienRech)
 
 ### Opção 2: Deploy Manual
 
@@ -53,8 +53,8 @@ Um sistema de CRM (Customer Relationship Management) moderno e inteligente const
 
 1. **Clone o repositório**
    ```bash
-   git clone <url-do-repositorio>
-   cd clientreach-crm
+   git clone https://github.com/msriffel/ClienRech.git
+   cd ClienRech
    ```
 
 2. **Instale as dependências**
@@ -201,7 +201,7 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 ## 📞 Suporte
 
 Para dúvidas ou suporte:
-- Abra uma [issue](https://github.com/seu-usuario/clientreach-crm/issues)
+- Abra uma [issue](https://github.com/msriffel/ClienRech/issues)
 - Consulte a [documentação de deploy](./DEPLOYMENT.md)
 - Entre em contato via email
 
