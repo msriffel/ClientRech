@@ -155,19 +155,29 @@ export async function createContact(clientId: string, formData: FormData) {
   revalidatePath(`/clients/${clientId}`);
 }
 
-export async function updateContactAction(contactId: string, formData: FormData) {
+// src/lib/actions.ts
+export async function updateContactAction(clientId: string, contactId: string, formData: FormData) {
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+  const role = formData.get('role') as string;
+
   await updateContact(contactId, {
-    name: formData.get('name') as string,
-    email: formData.get('email') as string,
-    phone: (formData.get('phone') as string) || undefined,
-    role: formData.get('role') as string
+    name,
+    email,
+    phone: phone || undefined,
+    role
   });
+
+  revalidatePath(`/clients/${clientId}`);
 }
 
-export async function deleteContactAction(contactId: string) {
-  const success = await deleteContact(contactId);
-  if (success) {
-    // revalidatePath pode depender do clientId se necessário
-  }
+export async function deleteContactAction(
+  clientId: string,
+  contactId: string
+) {
+  const success = await deleteContact(contactId); // a função do supabase continua recebendo só o contactId
+  if (success) revalidatePath(`/clients/${clientId}`);
   return success;
 }
+
