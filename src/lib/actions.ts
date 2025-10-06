@@ -38,6 +38,8 @@ export async function fetchClientStats() {
   return getClientStats();
 }
 
+export { updateClient };
+
 // ----------------------
 // Client Actions
 // ----------------------

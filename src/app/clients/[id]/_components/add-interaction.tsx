@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { InteractionType, AISuggestion } from '@/lib/types';
-import { createInteraction } from '@/lib/actions';
+import { createInteraction, updateClient } from '@/lib/actions';
 import { Brain } from 'lucide-react';
 
 interface AddInteractionProps {
@@ -35,9 +35,18 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
   };
 
   const handleAISuggestion = async () => {
+    if (!interactionLogs || interactionLogs.trim() === '') {
+      console.warn('Não há interações para analisar.');
+      setAiSuggestion({
+        suggestedStatus: 'Prospect Frio',
+        reason: 'Cliente sem histórico de interações'
+      });
+      setShowAIDialog(true);
+      return;
+    }
+
     setIsSuggesting(true);
     try {
-      // Simular chamada para o flow de IA
       const response = await fetch('/api/ai/suggest-status', {
         method: 'POST',
         headers: {
@@ -45,11 +54,13 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
         },
         body: JSON.stringify({ interactionLogs }),
       });
-      
+
       if (response.ok) {
         const suggestion = await response.json();
         setAiSuggestion(suggestion);
         setShowAIDialog(true);
+      } else {
+        console.error('Falha ao obter sugestão de IA:', response.statusText);
       }
     } catch (error) {
       console.error('Erro ao obter sugestão de IA:', error);
@@ -58,12 +69,19 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
     }
   };
 
+
   const handleAcceptSuggestion = async () => {
     if (aiSuggestion) {
-      // Aqui você implementaria a lógica para aceitar a sugestão
-      console.log('Sugestão aceita:', aiSuggestion);
-      setShowAIDialog(false);
-      setAiSuggestion(null);
+      try {
+        // Atualiza o status do cliente no Supabase
+        await updateClient(clientId, { status: aiSuggestion.suggestedStatus });
+        console.log('Status atualizado:', aiSuggestion.suggestedStatus);
+      } catch (error) {
+        console.error('Erro ao atualizar status do cliente:', error);
+      } finally {
+        setShowAIDialog(false);
+        setAiSuggestion(null);
+      }
     }
   };
 
@@ -76,7 +94,7 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
             <input type="hidden" name="client_id" value={clientId} />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="type">Tipo de Interação *</Label>
@@ -92,7 +110,7 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <Label htmlFor="nextContactDate">Próximo Contato *</Label>
                 <Input
@@ -125,7 +143,7 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
                 <Brain className="w-4 h-4 mr-2" />
                 {isSuggesting ? 'Analisando...' : 'Sugerir Status (IA)'}
               </Button>
-              
+
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Registrando...' : 'Registrar Interação'}
               </Button>
@@ -140,18 +158,18 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
             <AlertDialogTitle>Sugestão de Status</AlertDialogTitle>
             <AlertDialogDescription>
               {aiSuggestion ? (
-                <div className="space-y-4">
-                  <div>
+                <span className="space-y-4 block">
+                  <span>
                     <strong>Status Sugerido:</strong>
                     <span className="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded text-sm">
                       {aiSuggestion.suggestedStatus}
                     </span>
-                  </div>
-                  <div>
+                  </span>
+                  <span>
                     <strong>Motivo:</strong>
-                    <p className="mt-1 text-sm">{aiSuggestion.reason}</p>
-                  </div>
-                </div>
+                    <span className="mt-1 text-sm block">{aiSuggestion.reason}</span>
+                  </span>
+                </span>
               ) : (
                 'Carregando sugestão...'
               )}
