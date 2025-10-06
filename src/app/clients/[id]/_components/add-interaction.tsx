@@ -75,7 +75,7 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
-            <input type="hidden" name="clientId" value={clientId} />
+            <input type="hidden" name="client_id" value={clientId} />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

@@ -108,15 +108,20 @@ export async function deleteClientAction(id: string) {
 // Interaction Actions
 // ----------------------
 export async function createInteraction(formData: FormData) {
-  const clientId = formData.get('clientId') as string;
+  const client_id = formData.get('client_id') as string; // <-- alterado
   const type = formData.get('type') as string;
   const notes = formData.get('notes') as string;
   const nextContactDate = formData.get('nextContactDate') as string;
   const now = new Date().toISOString();
 
-  await addInteraction({ clientId, date: now, type: type as any, notes });
-  await updateClient(clientId, { lastContactDate: now, nextContactDate });
-  revalidatePath(`/clients/${clientId}`);
+  // Inserir interação no banco
+  await addInteraction({ client_id, date: now, type: type as any, notes });
+
+  // Atualizar cliente com datas de contato
+  await updateClient(client_id, { lastContactDate: now, nextContactDate });
+
+  // Revalidar cache da página
+  revalidatePath(`/clients/${client_id}`);
 }
 
 export async function updateInteractionAction(id: string, formData: FormData) {
@@ -133,6 +138,7 @@ export async function deleteInteractionAction(id: string, clientId: string) {
   if (success) revalidatePath(`/clients/${clientId}`);
   return success;
 }
+
 
 // ----------------------
 // Contact Actions
