@@ -8,8 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Interaction, InteractionType } from '@/lib/types';
 import { format } from 'date-fns';
@@ -42,9 +51,28 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleEditInteraction = async (interactionId: string, formData: FormData) => {
+    const dateStr = formData.get('date') as string;
+
+    if (dateStr) {
+      // 🔒 Interpreta a data como horário local e mantém o mesmo ao salvar
+      // Evita que o JS converta automaticamente para UTC
+      const [datePart, timePart] = dateStr.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
+
+      // Cria uma data em horário local, sem ajuste de fuso
+      const localDate = new Date(year, month - 1, day, hour, minute);
+
+      // Salva em formato ISO, mas sem alterar o horário
+      const isoLocal = localDate.toISOString().slice(0, 16);
+
+      formData.set('date', isoLocal);
+    }
+
     await updateInteractionAction(interactionId, formData);
     setEditingInteraction(null);
   };
+
 
   const handleDeleteInteraction = async (interactionId: string) => {
     setIsDeleting(interactionId);
@@ -76,11 +104,18 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                     </div>
                     <p className="text-sm text-gray-700">{interaction.notes}</p>
                   </div>
-                  
+
                   <div className="flex space-x-2 ml-4">
-                    <Dialog open={editingInteraction?.id === interaction.id} onOpenChange={(open) => !open && setEditingInteraction(null)}>
+                    <Dialog
+                      open={editingInteraction?.id === interaction.id}
+                      onOpenChange={(open) => !open && setEditingInteraction(null)}
+                    >
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline" onClick={() => setEditingInteraction(interaction)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingInteraction(interaction)}
+                        >
                           <Edit2 className="w-4 h-4" />
                         </Button>
                       </DialogTrigger>
@@ -88,7 +123,10 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                         <DialogHeader>
                           <DialogTitle>Editar Interação</DialogTitle>
                         </DialogHeader>
-                        <form action={(formData) => handleEditInteraction(interaction.id, formData)} className="space-y-4">
+                        <form
+                          action={(formData) => handleEditInteraction(interaction.id, formData)}
+                          className="space-y-4"
+                        >
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <Label htmlFor="type">Tipo de Interação</Label>
@@ -110,6 +148,7 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                                 id="date"
                                 name="date"
                                 type="datetime-local"
+                                // ✅ mostra o horário local correto
                                 defaultValue={format(new Date(interaction.date), "yyyy-MM-dd'T'HH:mm")}
                               />
                             </div>
@@ -124,7 +163,11 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                             />
                           </div>
                           <div className="flex justify-end space-x-2">
-                            <Button type="button" variant="outline" onClick={() => setEditingInteraction(null)}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setEditingInteraction(null)}
+                            >
                               Cancelar
                             </Button>
                             <Button type="submit">Salvar</Button>
@@ -132,7 +175,7 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                         </form>
                       </DialogContent>
                     </Dialog>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="sm" variant="destructive">
@@ -148,8 +191,8 @@ export function InteractionLog({ clientId, interactions }: InteractionLogProps) 
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeleteInteraction(interaction.id)} 
+                          <AlertDialogAction
+                            onClick={() => handleDeleteInteraction(interaction.id)}
                             disabled={isDeleting === interaction.id}
                           >
                             {isDeleting === interaction.id ? 'Excluindo...' : 'Excluir'}

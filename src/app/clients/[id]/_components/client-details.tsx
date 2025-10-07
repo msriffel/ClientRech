@@ -52,13 +52,27 @@ export function ClientDetails({ client }: ClientDetailsProps) {
 
   const handleSave = async () => {
     const form = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
+
+    let { nextContactDate, ...rest } = formData;
+
+    // Corrige o horário local para não perder 3 horas
+    if (nextContactDate) {
+      const [datePart, timePart] = nextContactDate.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
+      const localDate = new Date(year, month - 1, day, hour, minute);
+      // Mantém horário exato em ISO
+      nextContactDate = localDate.toISOString().slice(0, 16);
+    }
+
+    Object.entries({ nextContactDate, ...rest }).forEach(([key, value]) => {
       form.append(key, value);
     });
 
     await updateClientAction(client.id, form);
     setIsEditing(false);
   };
+
 
   const handleDelete = async () => {
     setIsDeleting(true);

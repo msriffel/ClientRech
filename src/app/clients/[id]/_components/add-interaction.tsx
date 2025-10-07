@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AISuggestion } from '@/lib/types';
 import { createInteraction, updateClient } from '@/lib/actions';
 import { Brain } from 'lucide-react';
@@ -15,18 +15,46 @@ import { Brain } from 'lucide-react';
 interface AddInteractionProps {
   clientId: string;
   interactionLogs: string;
+  onClientUpdate?: (updatedClient: { nextContactDate: string }) => void;
 }
 
-export function AddInteraction({ clientId, interactionLogs }: AddInteractionProps) {
+export function AddInteraction({ clientId, interactionLogs, onClientUpdate }: AddInteractionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
   const [showAIDialog, setShowAIDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
     try {
+      // 1️⃣ Criar interação
       await createInteraction(formData);
+
+      // 2️⃣ Atualizar nextContactDate do cliente
+      let nextContactDate = formData.get('nextContactDate') as string;
+
+      // Salva exatamente o valor informado no formulário, sem ajuste de fuso
+      if (nextContactDate) {
+        nextContactDate = nextContactDate.toString();
+      }
+
+
+      await updateClient(clientId, { nextContactDate });
+
+
+      // 3️⃣ Atualizar estado local da página
+      if (onClientUpdate) onClientUpdate({ nextContactDate });
+
+      // 4️⃣ Mostrar mensagem de sucesso
+      setSuccessMessage('Interação registrada com sucesso!');
+
+      // 5️⃣ Limpar formulário
+      if (formRef.current) formRef.current.reset();
+
+      // Limpar mensagem após 3 segundos
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Erro ao criar interação:', error);
     } finally {
@@ -86,10 +114,23 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
           <CardTitle>Registrar Interação</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-6">
+          {successMessage && (
+            <div className="mb-4 p-2 bg-green-100 text-green-800 rounded text-sm">
+              {successMessage}
+            </div>
+          )}
+
+          <form
+            ref={formRef}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const data = new FormData(e.currentTarget);
+              handleSubmit(data);
+            }}
+            className="space-y-6"
+          >
             <input type="hidden" name="client_id" value={clientId} />
 
-            {/* Tipo de Interação */}
             <div className="flex flex-col md:flex-row md:space-x-4 gap-4">
               <div className="flex-1">
                 <Label htmlFor="type">Tipo de Interação *</Label>
@@ -106,7 +147,6 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
                 </Select>
               </div>
 
-              {/* Próximo Contato */}
               <div className="flex-1">
                 <Label htmlFor="nextContactDate">Próximo Contato *</Label>
                 <Input
@@ -119,7 +159,6 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
               </div>
             </div>
 
-            {/* Notas */}
             <div>
               <Label htmlFor="notes">Notas da Interação *</Label>
               <Textarea
@@ -131,7 +170,6 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
               />
             </div>
 
-            {/* Botões */}
             <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
               <Button
                 type="button"

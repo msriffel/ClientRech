@@ -11,25 +11,18 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ClientCardProps {
   client: Client;
-  upcomingDays?: number; // intervalo para considerar próximos contatos
+  upcomingDays?: number;
 }
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
-    case 'Prospect Frio':
-      return 'status-prospect-frio';
-    case 'Prospect Morno':
-      return 'status-prospect-morno';
-    case 'Prospect Quente':
-      return 'status-prospect-quente';
-    case 'Cliente Ativo':
-      return 'status-cliente-ativo';
-    case 'Cliente Fiel':
-      return 'status-cliente-fiel';
-    case 'Cliente Inativo':
-      return 'status-cliente-inativo';
-    default:
-      return 'status-prospect-frio';
+    case 'Prospect Frio': return 'status-prospect-frio';
+    case 'Prospect Morno': return 'status-prospect-morno';
+    case 'Prospect Quente': return 'status-prospect-quente';
+    case 'Cliente Ativo': return 'status-cliente-ativo';
+    case 'Cliente Fiel': return 'status-cliente-fiel';
+    case 'Cliente Inativo': return 'status-cliente-inativo';
+    default: return 'status-prospect-frio';
   }
 };
 
@@ -45,14 +38,12 @@ export function ClientCard({ client, upcomingDays = 15 }: ClientCardProps) {
   }
 
   const nextContactDate = nextContactDateObj
-    ? format(nextContactDateObj, 'dd/MM/yyyy', { locale: ptBR })
+    ? format(nextContactDateObj, 'dd/MM/yyyy HH:mm', { locale: ptBR })
     : 'Não definido';
 
   return (
     <Link href={`/clients/${client.id}`}>
-      <Card
-        className={`client-card ${isOverdue ? 'overdue' : ''} cursor-pointer`}
-      >
+      <Card className={`client-card ${isOverdue ? 'overdue' : ''} cursor-pointer`}>
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <Avatar className="h-12 w-12">
