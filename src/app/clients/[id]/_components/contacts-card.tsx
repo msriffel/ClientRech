@@ -124,15 +124,34 @@ export function ContactsCard({ clientId, contacts }: ContactsCardProps) {
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
                     <h4 className="font-medium">{contact.name}</h4>
-                    <span className="text-sm text-gray-500">
-                      ({contact.role})
-                    </span>
+                    <span className="text-sm text-gray-500">({contact.role})</span>
                   </div>
-                  <p className="text-sm text-gray-600">{contact.email}</p>
+
+                  {/* Email clicável */}
+                  <p className="text-sm text-gray-600">
+                    <a
+                      href={`mailto:${contact.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {contact.email}
+                    </a>
+                  </p>
+
+                  {/* Telefone clicável para WhatsApp */}
                   {contact.phone && (
-                    <p className="text-sm text-gray-600">{contact.phone}</p>
+                    <p className="text-sm text-gray-600">
+                      <a
+                        href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-600 hover:underline"
+                      >
+                        {contact.phone}
+                      </a>
+                    </p>
                   )}
                 </div>
+
                 <div className="flex space-x-2">
                   <Dialog
                     open={editingContact?.id === contact.id}

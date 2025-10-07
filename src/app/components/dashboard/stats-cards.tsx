@@ -11,33 +11,36 @@ interface StatsCardsProps {
 export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.totalClients}</div>
+      {/* Total de Clientes */}
+      <Card className="h-16">
+        <CardContent className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Total de Clientes</span>
+          </div>
+          <span className="text-lg font-bold">{stats.totalClients}</span>
         </CardContent>
       </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Contatos Atrasados</CardTitle>
-          <Clock className="h-4 w-4 text-destructive" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-destructive">{stats.overdueContacts}</div>
+
+      {/* Contatos Atrasados */}
+      <Card className="h-16">
+        <CardContent className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-destructive" />
+            <span className="text-sm font-medium">Contatos Atrasados</span>
+          </div>
+          <span className="text-lg font-bold text-destructive">{stats.overdueContacts}</span>
         </CardContent>
       </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Próximos Contatos</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.upcomingContacts}</div>
+
+      {/* Próximos Contatos */}
+      <Card className="h-16">
+        <CardContent className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Próximos Contatos</span>
+          </div>
+          <span className="text-lg font-bold">{stats.upcomingContacts}</span>
         </CardContent>
       </Card>
     </div>

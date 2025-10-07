@@ -55,7 +55,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
     Object.entries(formData).forEach(([key, value]) => {
       form.append(key, value);
     });
-    
+
     await updateClientAction(client.id, form);
     setIsEditing(false);
   };
@@ -111,7 +111,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Tem certeza que deseja excluir a empresa "{client.companyName}"? 
+                        Tem certeza que deseja excluir a empresa "{client.companyName}"?
                         Esta ação não pode ser desfeita e todos os dados relacionados serão perdidos.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -136,7 +136,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
               {client.companyName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 space-y-4">
             <div>
               <Label htmlFor="companyName">Nome da Empresa</Label>
@@ -175,6 +175,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Website */}
           <div>
             <Label htmlFor="website">Website</Label>
             {isEditing ? (
@@ -185,9 +186,14 @@ export function ClientDetails({ client }: ClientDetailsProps) {
                 placeholder="https://exemplo.com"
               />
             ) : (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 break-words">
                 {client.website ? (
-                  <a href={client.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a
+                    href={client.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline break-words"
+                  >
                     {client.website}
                   </a>
                 ) : (
@@ -197,6 +203,7 @@ export function ClientDetails({ client }: ClientDetailsProps) {
             )}
           </div>
 
+          {/* Telefone */}
           <div>
             <Label htmlFor="phone">Telefone</Label>
             {isEditing ? (
@@ -207,25 +214,39 @@ export function ClientDetails({ client }: ClientDetailsProps) {
                 placeholder="+55 11 99999-9999"
               />
             ) : (
-              <p className="text-sm text-gray-600">{client.phone || 'Não informado'}</p>
+              <p className="text-sm text-gray-600">
+                {client.phone ? (
+                  <a
+                    href={`https://wa.me/${client.phone.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {client.phone}
+                  </a>
+                ) : (
+                  'Não informado'
+                )}
+              </p>
             )}
           </div>
         </div>
 
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="logoUrl">URL do Logo</Label>
-            {isEditing ? (
+          {/* Logo URL – aparece apenas em edição */}
+          {isEditing && (
+            <div>
+              <Label htmlFor="logoUrl">URL do Logo</Label>
               <Input
                 id="logoUrl"
                 value={formData.logoUrl}
                 onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
                 placeholder="https://exemplo.com/logo.png"
               />
-            ) : (
-              <p className="text-sm text-gray-600 break-all">{client.logoUrl}</p>
-            )}
-          </div>
+            </div>
+          )}
+
 
           <div>
             <Label htmlFor="nextContactDate">Próximo Contato</Label>

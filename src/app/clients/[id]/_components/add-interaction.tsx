@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { InteractionType, AISuggestion } from '@/lib/types';
+import { AISuggestion } from '@/lib/types';
 import { createInteraction, updateClient } from '@/lib/actions';
 import { Brain } from 'lucide-react';
 
@@ -36,7 +36,6 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
 
   const handleAISuggestion = async () => {
     if (!interactionLogs || interactionLogs.trim() === '') {
-      console.warn('Não há interações para analisar.');
       setAiSuggestion({
         suggestedStatus: 'Prospect Frio',
         reason: 'Cliente sem histórico de interações'
@@ -49,9 +48,7 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
     try {
       const response = await fetch('/api/ai/suggest-status', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interactionLogs }),
       });
 
@@ -69,13 +66,10 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
     }
   };
 
-
   const handleAcceptSuggestion = async () => {
     if (aiSuggestion) {
       try {
-        // Atualiza o status do cliente no Supabase
         await updateClient(clientId, { status: aiSuggestion.suggestedStatus });
-        console.log('Status atualizado:', aiSuggestion.suggestedStatus);
       } catch (error) {
         console.error('Erro ao atualizar status do cliente:', error);
       } finally {
@@ -92,14 +86,15 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
           <CardTitle>Registrar Interação</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-4">
+          <form action={handleSubmit} className="space-y-6">
             <input type="hidden" name="client_id" value={clientId} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+            {/* Tipo de Interação */}
+            <div className="flex flex-col md:flex-row md:space-x-4 gap-4">
+              <div className="flex-1">
                 <Label htmlFor="type">Tipo de Interação *</Label>
                 <Select name="type" required>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -111,17 +106,20 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
                 </Select>
               </div>
 
-              <div>
+              {/* Próximo Contato */}
+              <div className="flex-1">
                 <Label htmlFor="nextContactDate">Próximo Contato *</Label>
                 <Input
                   id="nextContactDate"
                   name="nextContactDate"
                   type="datetime-local"
                   required
+                  className="w-full"
                 />
               </div>
             </div>
 
+            {/* Notas */}
             <div>
               <Label htmlFor="notes">Notas da Interação *</Label>
               <Textarea
@@ -133,7 +131,8 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
               />
             </div>
 
-            <div className="flex justify-between">
+            {/* Botões */}
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -158,18 +157,17 @@ export function AddInteraction({ clientId, interactionLogs }: AddInteractionProp
             <AlertDialogTitle>Sugestão de Status</AlertDialogTitle>
             <AlertDialogDescription>
               {aiSuggestion ? (
-                <span className="space-y-4 block">
-                  <span>
+                <div className="space-y-2">
+                  <p>
                     <strong>Status Sugerido:</strong>
                     <span className="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded text-sm">
                       {aiSuggestion.suggestedStatus}
                     </span>
-                  </span>
-                  <span>
-                    <strong>Motivo:</strong>
-                    <span className="mt-1 text-sm block">{aiSuggestion.reason}</span>
-                  </span>
-                </span>
+                  </p>
+                  <p>
+                    <strong>Motivo:</strong> {aiSuggestion.reason}
+                  </p>
+                </div>
               ) : (
                 'Carregando sugestão...'
               )}

@@ -11,6 +11,7 @@ import { AlertTriangle } from 'lucide-react';
 
 interface ClientCardProps {
   client: Client;
+  upcomingDays?: number; // intervalo para considerar próximos contatos
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -32,13 +33,26 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export function ClientCard({ client }: ClientCardProps) {
-  const isOverdue = new Date(client.nextContactDate) < new Date();
-  const nextContactDate = format(new Date(client.nextContactDate), 'dd/MM/yyyy', { locale: ptBR });
+export function ClientCard({ client, upcomingDays = 15 }: ClientCardProps) {
+  const now = new Date();
+  const nextContactDateObj = client.nextContactDate ? new Date(client.nextContactDate) : null;
+  const isOverdue = nextContactDateObj ? nextContactDateObj < now : false;
+
+  let isUpcoming = false;
+  if (nextContactDateObj) {
+    const diffDays = (nextContactDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    isUpcoming = diffDays >= 0 && diffDays <= upcomingDays;
+  }
+
+  const nextContactDate = nextContactDateObj
+    ? format(nextContactDateObj, 'dd/MM/yyyy', { locale: ptBR })
+    : 'Não definido';
 
   return (
     <Link href={`/clients/${client.id}`}>
-      <Card className={`client-card ${isOverdue ? 'overdue' : ''} cursor-pointer`}>
+      <Card
+        className={`client-card ${isOverdue ? 'overdue' : ''} cursor-pointer`}
+      >
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <Avatar className="h-12 w-12">
@@ -47,7 +61,7 @@ export function ClientCard({ client }: ClientCardProps) {
                 {client.companyName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 truncate">
@@ -57,20 +71,23 @@ export function ClientCard({ client }: ClientCardProps) {
                   <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
                 )}
               </div>
-              
+
               <div className="mt-2 flex items-center space-x-2">
                 <Badge className={getStatusBadgeVariant(client.status)}>
                   {client.status}
                 </Badge>
-              </div>
-              
-              <div className="mt-3 text-sm text-gray-600">
-                <p>Próximo contato: {nextContactDate}</p>
-                {client.website && (
-                  <p className="truncate">{client.website}</p>
+                {isUpcoming && !isOverdue && (
+                  <Badge className="bg-green-500 text-white text-xs">
+                    Próximo Contato
+                  </Badge>
                 )}
               </div>
-              
+
+              <div className="mt-3 text-sm text-gray-600">
+                <p>Próximo contato: {nextContactDate}</p>
+                {client.website && <p className="truncate">{client.website}</p>}
+              </div>
+
               <div className="mt-2 text-xs text-gray-500">
                 {client.contacts.length} contato{client.contacts.length !== 1 ? 's' : ''}
               </div>

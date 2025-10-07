@@ -6,7 +6,11 @@ import { StatsCards } from './components/dashboard/stats-cards';
 import { ClientCard } from './components/dashboard/client-card';
 import { Filters } from './components/dashboard/filters';
 import { Client, ClientStats } from '@/lib/types';
-import { fetchClients, fetchClientStats } from '@/lib/actions';
+import { fetchClients } from '@/lib/actions';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search } from 'lucide-react';
+
+
 
 export default function Dashboard() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -17,25 +21,37 @@ export default function Dashboard() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [contactFilter, setContactFilter] = useState<'all' | 'overdue' | 'upcoming'>('all');
+  const [upcomingDays, setUpcomingDays] = useState(10); // <-- intervalo padrão
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientsData, statsDataFromApi] = await Promise.all([
-          fetchClients(),
-          fetchClientStats()
-        ]);
-
+        const clientsData = await fetchClients();
         setClients(clientsData);
 
-        // Ajusta os nomes para o StatsCards
-        setStats({
-          totalClients: statsDataFromApi.total ?? 0,
-          overdueContacts: statsDataFromApi.active ?? 0,
-          upcomingContacts: statsDataFromApi.inactive ?? 0
+        const now = new Date();
+        let overdue = 0;
+        let upcoming = 0;
+
+        clientsData.forEach(client => {
+          if (client.nextContactDate) {
+            const next = new Date(client.nextContactDate);
+            if (next < now) {
+              overdue++;
+            } else if ((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= upcomingDays) {
+              // Contatos dentro do intervalo dos próximos dias
+              upcoming++;
+            }
+          }
         });
 
+        setStats({
+          totalClients: clientsData.length,
+          overdueContacts: overdue,
+          upcomingContacts: upcoming
+        });
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       } finally {
@@ -44,12 +60,24 @@ export default function Dashboard() {
     };
 
     loadData();
-  }, []);
+  }, [upcomingDays]); // Recalcula se o período mudar
+
+  const now = new Date();
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.companyName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    let matchesContact = true;
+    if (contactFilter === 'overdue') {
+      matchesContact = client.nextContactDate ? new Date(client.nextContactDate) < now : false;
+    } else if (contactFilter === 'upcoming') {
+      matchesContact = client.nextContactDate
+        ? (new Date(client.nextContactDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= upcomingDays
+        : false;
+    }
+
+    return matchesSearch && matchesStatus && matchesContact;
   });
 
   if (loading) {
@@ -76,40 +104,64 @@ export default function Dashboard() {
 
         <StatsCards stats={stats} />
 
-        <div className="mt-8">
-          <Filters
-            searchTerm={searchTerm}
-            statusFilter={statusFilter}
-            onSearchChange={setSearchTerm}
-            onStatusChange={setStatusFilter}
-          />
-
-          {filteredClients.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 text-lg">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Nenhum cliente encontrado com os filtros aplicados.' 
-                  : 'Nenhum cliente cadastrado ainda.'}
+        <div className="mb-8 mt-2">
+          <Card>
+            <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap justify-between mt-4">
+              {/* Próximos contatos em X dias */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700 font-medium">
+                  Próximos contatos em:
+                </label>
+                <input
+                  type="number"
+                  className="border rounded px-2 py-1 w-14 focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={upcomingDays}
+                  onChange={(e) => setUpcomingDays(Number(e.target.value))}
+                  min={1}
+                />
+                <span className="text-sm text-gray-500">dias</span>
               </div>
-              {!searchTerm && statusFilter === 'all' && (
-                <div className="mt-4">
-                  <a 
-                    href="/clients/new" 
-                    className="text-primary hover:text-primary/80 font-medium"
-                  >
-                    Cadastrar primeiro cliente
-                  </a>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredClients.map((client) => (
-                <ClientCard key={client.id} client={client} />
-              ))}
-            </div>
-          )}
+
+              {/* Filtros organizados */}
+              <Filters
+                searchTerm={searchTerm}
+                statusFilter={statusFilter}
+                contactFilter={contactFilter}
+                onSearchChange={setSearchTerm}
+                onStatusChange={setStatusFilter}
+                onContactFilterChange={setContactFilter}
+              />
+
+            </CardContent>
+          </Card>
         </div>
+
+
+        {filteredClients.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg">
+              {searchTerm || statusFilter !== 'all' || contactFilter !== 'all'
+                ? 'Nenhum cliente encontrado com os filtros aplicados.'
+                : 'Nenhum cliente cadastrado ainda.'}
+            </div>
+            {!searchTerm && statusFilter === 'all' && contactFilter === 'all' && (
+              <div className="mt-4">
+                <a
+                  href="/clients/new"
+                  className="text-primary hover:text-primary/80 font-medium"
+                >
+                  Cadastrar primeiro cliente
+                </a>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredClients.map((client) => (
+              <ClientCard key={client.id} client={client} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
