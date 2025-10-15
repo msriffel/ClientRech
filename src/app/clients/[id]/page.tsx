@@ -24,29 +24,37 @@ export default async function ClientPage({ params }: ClientPageProps) {
     notFound();
   }
 
-  // Criar string com histórico de interações para a IA
+  // Cria string com histórico de interações para a IA
   const interactionLogs = interactions
-    .map(interaction => 
+    .map(interaction =>
       `${interaction.type} em ${new Date(interaction.date).toLocaleDateString('pt-BR')}: ${interaction.notes}`
     )
     .join('\n');
+
+  const isInactive = client.status === 'Cliente Inativo';
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            asChild
-            className="mb-4"
-          >
+          <Button variant="ghost" asChild className="mb-4">
             <Link href="/">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Dashboard
             </Link>
           </Button>
+
           <h1 className="text-3xl font-bold text-gray-900">{client.companyName}</h1>
-          <p className="text-gray-600 mt-2">Gerencie os detalhes e interações desta empresa</p>
+          <p className="text-gray-600 mt-2">
+            Gerencie os detalhes e interações desta empresa
+          </p>
+
+          {/* 🔴 Alerta de cliente inativo */}
+          {isInactive && (
+            <div className="mt-4 rounded-lg border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+              ⚠️ Este cliente está <strong>inativo</strong>. Os lembretes e próximos contatos estão desativados.
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -54,7 +62,9 @@ export default async function ClientPage({ params }: ClientPageProps) {
           <div className="space-y-6">
             <ClientDetails client={client} />
             <ContactsCard clientId={client.id} contacts={client.contacts} />
-            <AddInteraction clientId={client.id} interactionLogs={interactionLogs} />
+            {!isInactive && (
+              <AddInteraction clientId={client.id} interactionLogs={interactionLogs} />
+            )}
           </div>
 
           {/* Coluna 2: Histórico de Interações */}

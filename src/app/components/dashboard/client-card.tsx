@@ -21,7 +21,7 @@ const getStatusBadgeVariant = (status: string) => {
     case 'Prospect Quente': return 'status-prospect-quente';
     case 'Cliente Ativo': return 'status-cliente-ativo';
     case 'Cliente Fiel': return 'status-cliente-fiel';
-    case 'Cliente Inativo': return 'status-cliente-inativo';
+    case 'Cliente Inativo': return 'bg-red-600 text-white'; // 🔴 agora o inativo é o “desativado”
     default: return 'status-prospect-frio';
   }
 };
@@ -41,9 +41,19 @@ export function ClientCard({ client, upcomingDays = 15 }: ClientCardProps) {
     ? format(nextContactDateObj, 'dd/MM/yyyy HH:mm', { locale: ptBR })
     : 'Não definido';
 
+  // 🔴 NOVO: lógica para cliente inativo (desativado)
+  const isDisabled = client.status === 'Cliente Inativo';
+
   return (
     <Link href={`/clients/${client.id}`}>
-      <Card className={`client-card ${isOverdue ? 'overdue' : ''} cursor-pointer`}>
+
+      <Card
+        className={`client-card cursor-pointer transition-all duration-200 ${isOverdue && !isDisabled ? 'overdue' : ''
+          } ${isDisabled
+            ? 'bg-red-100 border-red-400 opacity-80'
+            : 'bg-white hover:shadow-md'
+          }`}
+      >
         <CardContent className="p-6">
           <div className="flex items-start space-x-4">
             <Avatar className="h-12 w-12">
@@ -55,10 +65,15 @@ export function ClientCard({ client, upcomingDays = 15 }: ClientCardProps) {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                <h3
+                  className={`text-lg font-semibold truncate ${isDisabled ? 'text-red-700' : 'text-gray-900'
+                    }`}
+                >
                   {client.companyName}
                 </h3>
-                {isOverdue && (
+
+                {/* 🔴 Remove alerta se desativado */}
+                {!isDisabled && isOverdue && (
                   <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
                 )}
               </div>
@@ -67,20 +82,29 @@ export function ClientCard({ client, upcomingDays = 15 }: ClientCardProps) {
                 <Badge className={getStatusBadgeVariant(client.status)}>
                   {client.status}
                 </Badge>
-                {isUpcoming && !isOverdue && (
+
+                {/* 🔴 Só mostra "Próximo Contato" se não estiver inativo */}
+                {!isDisabled && isUpcoming && !isOverdue && (
                   <Badge className="bg-green-500 text-white text-xs">
                     Próximo Contato
                   </Badge>
                 )}
               </div>
 
-              <div className="mt-3 text-sm text-gray-600">
-                <p>Próximo contato: {nextContactDate}</p>
+              <div
+                className={`mt-3 text-sm ${isDisabled ? 'text-red-700' : 'text-gray-600'
+                  }`}
+              >
+                <p>
+                  Próximo contato:{' '}
+                  {isDisabled ? 'Indisponível (cliente inativo)' : nextContactDate}
+                </p>
                 {client.website && <p className="truncate">{client.website}</p>}
               </div>
 
               <div className="mt-2 text-xs text-gray-500">
-                {client.contacts.length} contato{client.contacts.length !== 1 ? 's' : ''}
+                {client.contacts.length} contato
+                {client.contacts.length !== 1 ? 's' : ''}
               </div>
             </div>
           </div>

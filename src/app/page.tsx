@@ -18,50 +18,67 @@ export default function Dashboard() {
   const [upcomingDays, setUpcomingDays] = useState(10);
   const [loading, setLoading] = useState(true);
 
+  // Carrega clientes
   useEffect(() => {
     const loadData = async () => {
       try {
         const clientsData = await fetchClients();
         setClients(clientsData);
-
-        const now = new Date();
-        let overdue = 0, upcoming = 0;
-
-        clientsData.forEach(client => {
-          if (client.nextContactDate) {
-            const next = new Date(client.nextContactDate);
-            if (next < now) overdue++;
-            else if ((next.getTime() - now.getTime()) / (1000*60*60*24) <= upcomingDays) upcoming++;
-          }
-        });
-
-        setStats({ totalClients: clientsData.length, overdueContacts: overdue, upcomingContacts: upcoming });
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       } finally {
         setLoading(false);
       }
     };
-
     loadData();
-  }, [upcomingDays]);
+  }, []);
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.companyName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
-
+  // Calcula stats ignorando clientes inativos
+  useEffect(() => {
     const now = new Date();
-    let matchesContact = true;
-    if (contactFilter === 'overdue') {
-      matchesContact = client.nextContactDate ? new Date(client.nextContactDate) < now : false;
-    } else if (contactFilter === 'upcoming') {
-      matchesContact = client.nextContactDate
-        ? (new Date(client.nextContactDate).getTime() - now.getTime()) / (1000*60*60*24) <= upcomingDays
-        : false;
-    }
+    let overdue = 0, upcoming = 0;
 
-    return matchesSearch && matchesStatus && matchesContact;
-  });
+    clients.forEach(client => {
+      if (client.status === 'Cliente Inativo') return; // ignora
+      if (client.nextContactDate) {
+        const next = new Date(client.nextContactDate);
+        if (next < now) overdue++;
+        else if ((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= upcomingDays) upcoming++;
+      }
+    });
+
+    setStats({ totalClients: clients.length, overdueContacts: overdue, upcomingContacts: upcoming });
+  }, [clients, upcomingDays]);
+
+  // Filtra e ordena clientes
+  const filteredClients = clients
+    .filter(client => {
+      const matchesSearch = client.companyName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
+
+      const now = new Date();
+      let matchesContact = true;
+      if (contactFilter === 'overdue') {
+        matchesContact = client.status === 'Cliente Inativo' ? false : (client.nextContactDate ? new Date(client.nextContactDate) < now : false);
+      } else if (contactFilter === 'upcoming') {
+        matchesContact = client.status === 'Cliente Inativo' ? false : (client.nextContactDate
+          ? (new Date(client.nextContactDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= upcomingDays
+          : false);
+      }
+
+      return matchesSearch && matchesStatus && matchesContact;
+    })
+    .sort((a, b) => {
+      // Clientes inativos sempre por último
+      if (a.status === 'Cliente Inativo' && b.status !== 'Cliente Inativo') return 1;
+      if (b.status === 'Cliente Inativo' && a.status !== 'Cliente Inativo') return -1;
+
+      // Ativos/prospects: ordena pelo próximo contato
+      const now = new Date();
+      const aNext = a.nextContactDate ? new Date(a.nextContactDate).getTime() : Infinity;
+      const bNext = b.nextContactDate ? new Date(b.nextContactDate).getTime() : Infinity;
+      return aNext - bNext;
+    });
 
   const handleClientUpdate = (clientId: string, updated: { nextContactDate: string }) => {
     setClients(prev =>

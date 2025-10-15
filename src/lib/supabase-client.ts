@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Client, Contact, Interaction } from './types';
+import { Client, ClientStatus, Contact, Interaction } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -26,7 +26,7 @@ export async function addClient(client: Omit<Client, 'id' | 'createdAt'>): Promi
       website: client.website,
       phone: client.phone,
       logo_url: client.logoUrl,
-      status: client.status,
+      status: client.status as ClientStatus,
       last_contact_date: client.lastContactDate,
       next_contact_date: client.nextContactDate
     })
@@ -90,7 +90,7 @@ export async function getClientById(id: string): Promise<Client | null> {
     website: data.website,
     phone: data.phone,
     logoUrl: data.logo_url,
-    status: data.status,
+    status: data.status as ClientStatus,
     lastContactDate: data.last_contact_date,
     nextContactDate: data.next_contact_date,
     createdAt: data.created_at,
@@ -122,7 +122,7 @@ export async function getClients(): Promise<Client[]> {
         website: client.website,
         phone: client.phone,
         logoUrl: client.logo_url,
-        status: client.status,
+        status: client.status as ClientStatus, // ✅ aqui
         lastContactDate: client.last_contact_date,
         nextContactDate: client.next_contact_date,
         createdAt: client.created_at,
@@ -134,6 +134,7 @@ export async function getClients(): Promise<Client[]> {
   return clientsWithContacts;
 }
 
+
 export async function updateClient(id: string, updates: Partial<Client>) {
   const { error } = await supabaseAdmin
     .from('clients')
@@ -142,7 +143,7 @@ export async function updateClient(id: string, updates: Partial<Client>) {
       website: updates.website,
       phone: updates.phone,
       logo_url: updates.logoUrl,
-      status: updates.status,
+      status: updates.status as string, // ✅ converte literal para string
       last_contact_date: updates.lastContactDate,
       next_contact_date: updates.nextContactDate
     })
@@ -235,12 +236,12 @@ export async function getClientStats(): Promise<{ total: number; active: number;
   const { count: active } = await supabase
     .from('clients')
     .select('*', { count: 'exact', head: true })
-    .eq('status', 'ativo');
+    .eq('status', 'Cliente Ativo');
 
   const { count: inactive } = await supabase
     .from('clients')
     .select('*', { count: 'exact', head: true })
-    .eq('status', 'inativo');
+    .in('status', ['Cliente Inativo', 'Desativado']);
 
   return {
     total: total ?? 0,
